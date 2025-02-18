@@ -24,7 +24,7 @@ input_parameters = [
     {"start_activity": "Add penalty", "end_activity": "Payment", "gamma": 5, "min_batch_size": 20, "min_sample": 2},
 
     # Create Fine → Payment
-    {"start_activity": "Create Fine", "end_activity": "Payment", "gamma": 0.0000001, "min_batch_size": 30, "min_sample": 2},
+    {"start_activity": "Create Fine", "end_activity": "Payment", "gamma": 0.0000001, "min_batch_size": 30, "min_sample": 2}, 
     {"start_activity": "Create Fine", "end_activity": "Payment", "gamma": 1, "min_batch_size": 30, "min_sample": 2},
     {"start_activity": "Create Fine", "end_activity": "Payment", "gamma": 2, "min_batch_size": 30, "min_sample": 2},
 

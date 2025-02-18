@@ -45,7 +45,7 @@ def upload_file():
         return jsonify({'error': 'No file selected'}), 400
 
     # Check if the uploaded file is XES (optional but recommended)
-    if not file.filename.endswith('.xes'):
+    if not (file.filename.endswith('.xes') or file.filename.endswith('.xes.gz')):
         return jsonify({'error': 'Invalid file format. Please upload an XES file.'}), 400
 
     # Secure the filename and save it to the upload folder

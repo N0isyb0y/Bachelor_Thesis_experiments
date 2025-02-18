@@ -767,5 +767,6 @@ def label_dfs(dfs):
 
 if __name__ == "__main__":
 
-    #event_log = import_xes("C:\\Users\\Maurice\\Desktop\\Bachelor thesis new\\Mining-Patterns-in-Performance-Spectrum\\Road_Traffic_Fine_Management_Process.xes")
+    event_log = import_xes("C:\\Users\\Maurice\\Desktop\\Bachelor_Thesis_expexperiments\\BPI Challenge 2017_1_all\\BPI Challenge 2017.xes.gz")
+    print(event_log)
     pass
