@@ -1,0 +1,13 @@
+batch_algorithm,start_activity,gamma,min_batch_size,min samples,number_of_traces,number_of_batches,batch_frequency,average_batch_arrival_window,average_batch_interval,average_batch_size,runtime
+DBSCAN FIFO,Add penalty,1,20,2,3174,94,17.05,3.23,44.04,33.77,14.66
+DBSCAN FIFO,Add penalty,1,20,20,2540,71,13.64,2.15,60.67,35.77,13.69
+DBSCAN FIFO,Add penalty,5,20,2,2780,50,14.93,37.62,57.2,55.6,13.36
+DBSCAN FIFO,Add penalty,5,20,20,1970,38,10.58,15.58,108.24,51.84,13.41
+DBSCAN FIFO,Create Fine,1,30,2,12250,229,26.09,6.37,14.78,53.49,17.99
+DBSCAN FIFO,Create Fine,1,30,30,6838,161,14.56,2.25,25.79,42.47,18.13
+DBSCAN FIFO,Create Fine,2,30,2,13818,111,29.43,24.78,19.51,124.49,17.2
+DBSCAN FIFO,Create Fine,2,30,30,8346,133,17.78,7.14,26.88,62.75,17.21
+DBSCAN FIFO,Payment,1,20,2,603,20,15.45,2.45,112.26,30.15,10.51
+DBSCAN FIFO,Payment,1,20,20,482,16,12.35,1.44,95.07,30.12,10.36
+DBSCAN FIFO,Payment,5,20,2,623,18,15.97,14.33,121.24,34.61,10.22
+DBSCAN FIFO,Payment,5,20,20,470,13,12.05,8.08,173.33,36.15,10.14

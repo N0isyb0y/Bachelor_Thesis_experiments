@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js with Flask</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f8fc;
+            color: #333;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 1800px;
+            margin: 20px;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1, h2 {
+            color: #2a75bb;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group button {
+            margin: 5px 0;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-group button {
+            background-color: #2a75bb;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-group button:hover {
+            background-color: #1d5a94;
+        }
+
+        .chart-container {
+            margin-top: 30px;
+            width: 100%;
+            height: 190px;
+        }
+
+        #chart {
+            text-align: left;
+        }
+
+        .tooltip {
+            position: absolute;
+            padding: 10px;
+            background-color: rgba(50, 50, 50, 0.85);
+            color: white;
+            border-radius: 5px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* Chart customization */
+        .case-line {
+            stroke-width: 2;
+        }
+
+        .start-axis line,
+        .end-axis line {
+            stroke: lightgray;
+            stroke-width: 1;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            shape-rendering: crispEdges;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Event Data Visualization</h1>
+
+        <!-- File upload section -->
+        <div class="form-group">
+            <label for="fileInput">Select an XES File</label>
+            <input type="file" id="fileInput">
+            <button onclick="uploadFile()">Upload File</button>
+        </div>
+
+        <!-- Dropdowns for event selection -->
+        <h2>Event Selections</h2>
+        <div class="form-group">
+            <label for="dropdown1">Choose First Event</label>
+            <select id="dropdown1">
+                <option value="">Select an option</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="dropdown2">Choose Second Event</label>
+            <select id="dropdown2">
+                <option value="">Select an option</option>
+            </select>
+        </div>
+
+        <!-- Dropdowns for analysis options -->
+        <h2>Analysis Options</h2>
+        <div class="form-group">
+            <label for="analysisDropdown">Choose Analysis</label>
+            <select id="analysisDropdown">
+                <option value="">Select an analysis option</option>
+                <option value="Duration">Duration</option>
+                <option value="Batch on end v1">Batch on end v1</option>
+                <option value="Batch on end v2">Batch on end v2</option>
+                <option value="Batch on end DBSCAN">Batch on end DBSCAN</option>
+                <option value="Batch on start v1">Batch on start v1</option>
+                <option value="Batch on start v2">Batch on start v2</option>
+                <option value="Batch on start DBSCAN">Batch on start DBSCAN</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="batchTypeDropdown">Select Batch Type</label>
+            <select id="batchTypeDropdown">
+                <option value="">Select a batch type</option>
+                <option value="unordered">Unordered</option>
+                <option value="fifo">FIFO</option>
+                <option value="lifo">LIFO</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="gammaInput">Enter Gamma Value</label><br>
+            <input type="number" id="gammaInput" placeholder="Enter Gamma value">
+        </div>
+        
+        <!-- New input for Min Pattern Size -->
+        <div class="form-group">
+            <label for="minPatternSizeInput">Enter Min Pattern Size</label><br>
+            <input type="number" id="minPatternSizeInput" placeholder="Enter Min Pattern Size">
+        </div>
+        
+        <!-- New input for Min Sample -->
+        <div class="form-group">
+            <label for="minSampleInput">Enter Min Sample</label><br>
+            <input type="number" id="minSampleInput" placeholder="Enter Min Sample">
+        </div>
+        
+        <!-- New input for Violation Tolerance -->
+        <div class="form-group">
+            <label for="violationToleranceInput">Enter Violation Tolerance</label><br>
+            <input type="number" id="violationToleranceInput" placeholder="Enter Violation Tolerance">
+        </div>
+        
+
+        <div class="form-group">
+            <button onclick="submitSelections()">Submit Selections</button>
+        </div>
+
+        <!-- Chart Containers -->
+        <h2>Visualizations</h2>
+        <div id="chart"></div>
+        <div id="totalSequenceChart" class="chart-container"></div>
+        <div id="dataChart" class="chart-container"></div>
+
+        <h2>Metrics</h2>
+        <div id="metricsContainer"></div>
+    </div>
+
+    <!-- Tooltip for charts -->
+    <div class="tooltip"></div>
+
+    <script>
+        // Sample data (replace this with your fetched JSON data)
+        
+
+        // Function to format timestamps
+        function formatTimestamp(milliseconds) {
+            const date = new Date(milliseconds);
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            const hours = String(date.getUTCHours()).padStart(2, '0');
+            const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // Draw chart function
+        let globalExtent = null;
+        function drawChart(data, containerId, analysis_option, useGlobalExtent = false) {
+            const margin = { top: 0, right: 20, bottom: 20, left: 50 };
+            const width = 1800 - margin.left - margin.right;
+            const height = 140;
+
+            // Remove previous SVG if exists
+            d3.select(`#${containerId}`).select("svg").remove();
+
+            if (!globalExtent || !useGlobalExtent) {
+                globalExtent = d3.extent([
+                    ...data.map(d => d.start_time),
+                    ...data.map(d => d.end_time)
+                ]);
+            }
+
+            const xScale = d3.scaleTime()
+                .domain(globalExtent) // Use stored extent
+                .range([0, width]);
+
+            const svg = d3.select(`#${containerId}`).append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .call(d3.zoom()
+                    .scaleExtent([0.75, 10])
+                    .on("zoom", zoomed)
+                )
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const chartGroup = svg.append("g");
+
+            // Add start time axis
+            const xAxisStart = d3.axisBottom(xScale).ticks(5).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M"));
+            const startAxisGroup = chartGroup.append("g")
+                .attr("class", "x-axis-start")
+                .attr("transform", `translate(0,${height})`)
+                .call(xAxisStart);
+
+            // Add end time axis
+            const xAxisEnd = d3.axisBottom(xScale);
+            const endAxisGroup = chartGroup.append("g")
+                .attr("class", "x-axis-end")
+                .attr("transform", `translate(0,${height - 140})`)
+                .call(xAxisEnd);
+
+            if (containerId === "dataChart") {
+                endAxisGroup.selectAll("line").remove();
+                endAxisGroup.selectAll("text").remove();
+            }
+
+            if (containerId === "totalSequenceChart") {
+                startAxisGroup.selectAll("line").remove();
+                startAxisGroup.selectAll("text").remove();
+                endAxisGroup.selectAll("line").remove();
+                endAxisGroup.selectAll("text").remove();
+            }
+
+            // Calculate duration quartiles
+            const sortedDurations = data.map(d => d.duration).sort((a, b) => a - b);
+            const q1 = d3.quantile(sortedDurations, 0.25);
+            const q2 = d3.quantile(sortedDurations, 0.5);
+            const q3 = d3.quantile(sortedDurations, 0.75);
+
+            // Define color mapping based on quartiles
+            //const getColor = duration => {
+            //    if (duration <= q1) return "#3f73ff "; // Dark Blue
+            //    else if (duration <= q2) return "#3f73ff "; // Light Blue
+            //    else if (duration <= q3) return "#3f73ff "; // Light Orange
+            //    else return "#ff6400 "; // Dark Orange
+            //};
+
+            const getColor = (duration, case_ID) => {
+                console.log(`containerId: ${containerId}, duration: ${duration}, case_ID: ${case_ID}`);
+                if (containerId === "totalSequenceChart") {
+                    const entry = data.find(entry => entry.case_ID === case_ID);
+                    if (entry && entry.is_in_subset === 1) {
+                        return "#3f73ff"; // Color for cases in the subset red
+                    } else {
+                        return "#3f73ff"; // Default color for other cases
+                    }
+                } else {
+                    if (duration <= q1) return "#3f73ff"; // Dark Blue
+                    else if (duration <= q2) return "#3f73ff"; // Light Blue
+                    else if (duration <= q3) return "#3f73ff"; // Light Orange #ffa500
+                    else return "#3f73ff"; // Dark Orange #ff6400
+                }
+            };
+
+
+
+            const tooltip = d3.select("body")
+                .append("div")
+                .attr("class", "tooltip")
+                .style("position", "absolute")
+                .style("visibility", "hidden")
+                .style("background", "#fff")
+                .style("border", "1px solid #ccc")
+                .style("padding", "8px")
+                .style("border-radius", "4px")
+                .style("box-shadow", "0px 0px 10px rgba(0,0,0,0.1)");
+
+            const lines = data.map(d => {
+                const x1 = xScale(d.start_time);
+                const x2 = xScale(d.end_time);
+                const color = getColor(d.duration,d.case_ID);
+
+                return chartGroup.append("line")
+                    .attr("class", "case-line")
+                    .attr("x1", x2)
+                    .attr("x2", x1)
+                    .attr("y1", height)
+                    .attr("y2", height - 140)
+                    .style("stroke-width", 0.7)
+                    .style("stroke", color)
+                    .datum(d);  // Store data for each line
+            });
+
+            svg.append("rect")
+                .attr("width", width)
+                .attr("height", height)
+                .style("fill", "none")
+                .style("pointer-events", "all")
+                .on("mousemove", function(event) {
+                    const [mouseX] = d3.pointer(event, this);
+
+                    const closestData = data.reduce((a, b) => {
+                        const distanceA = Math.abs(xScale(a.start_time) - mouseX);
+                        const distanceB = Math.abs(xScale(b.start_time) - mouseX);
+                        return distanceA < distanceB ? a : b;
+                    });
+
+                    const x1 = xScale(closestData.start_time);
+                    const x2 = xScale(closestData.end_time);
+
+                    tooltip.style("visibility", "visible")
+                        .html(`
+                            <strong>Case ID:</strong> ${closestData.case_ID}<br>
+                            <strong>Start Time:</strong> ${d3.timeFormat("%Y-%m-%d %H:%M")(closestData.start_time)}<br>
+                            <strong>End Time:</strong> ${d3.timeFormat("%Y-%m-%d %H:%M")(closestData.end_time)}<br>
+                            <strong>Duration:</strong> ${closestData.duration} mins
+                        `)
+                        .style("top", `${event.pageY + 10}px`)
+                        .style("left", `${event.pageX + 10}px`);
+
+                    lines.forEach(line => {
+                        if (line.datum().case_ID === closestData.case_ID) {
+                            line.style("stroke-width", 0.5);
+                        } else {
+                            line.style("stroke-width", 0.05);
+                        }
+                    });
+                })
+                .on("mouseout", function() {
+                    tooltip.style("visibility", "hidden");
+                    lines.forEach(line => line.style("stroke-width", 0.05));
+                });
+        }
+        
+
+
+
+        // Step 3: Define the zoom event handler
+        function zoomed(event) {
+            chartGroup.attr("transform", event.transform);  // Apply the zoom transform to the chart group
+        }
+        
+
+        // Event listener for the button
+        document.getElementById("drawChart").addEventListener("click", function() {
+            
+            fetch('/data/json')
+                .then(response => response.json())
+                .then(data => {
+                    // Draw chart with fetched data
+                    console.log(data);
+
+                    // Flatten the data if it's an array of arrays
+                    const flattenedData = data.flat();
+
+                    // Log the flattened data to ensure it's in the correct format
+                    console.log(flattenedData);
+                    drawChart(flattenedData);
+                })
+                .catch(error => console.error('Error fetching the JSON file:', error));
+        });
+    </script>
+
+    <script>
+        function formatTimestamp(milliseconds) {
+            const date = new Date(milliseconds);
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            const hours = String(date.getUTCHours()).padStart(2, '0');
+            const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+        
+    
+        // Fetch data and create visualization on button click
+        document.getElementById("load-data").onclick = function() {
+            fetch('/data/json')
+                .then(response => response.json())
+                .then(data => {
+                    displayPerformanceSpectrum(data);  // Call the new performance spectrum function
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                });
+        };
+    </script>
+
+
+
+
+
+    <script>
+        // Funktion zum Hochladen der Datei
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];  // Die ausgewählte Datei
+
+            if (file) {
+                const formData = new FormData();
+                formData.append('file', file);  // Datei in FormData packen
+
+                // Datei mittels fetch an das Backend senden
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Erfolgreich hochgeladen:', data);
+                    alert('Datei erfolgreich hochgeladen!');
+
+                    // Dropdown mit den Optionen aus der Backend-Antwort füllen
+                    populateDropdowns(data);
+                    
+                })
+                .catch(error => {
+                    console.error('Fehler beim Hochladen:', error);
+                    alert('Fehler beim Hochladen der Datei.');
+                });
+            } else {
+                alert('Bitte eine Datei auswählen.');
+            }
+        }
+
+        // Dropdown mit Backend-Daten füllen
+        function populateDropdowns(options) {
+            const dropdown1 = document.getElementById('dropdown1');
+            const dropdown2 = document.getElementById('dropdown2');
+
+            // Reset dropdowns
+            dropdown1.innerHTML = '<option value="">Select an option</option>';
+            dropdown2.innerHTML = '<option value="">Select an option</option>';
+
+            options.forEach(option => {
+                // First dropdown
+                const optionElement1 = document.createElement('option');
+                optionElement1.value = option;
+                optionElement1.textContent = option;
+                dropdown1.appendChild(optionElement1);
+
+                // Second dropdown
+                const optionElement2 = document.createElement('option');
+                optionElement2.value = option;
+                optionElement2.textContent = option;
+                dropdown2.appendChild(optionElement2);
+            });
+        }
+
+
+        // Auswahl an das Backend senden
+        // Submit all selections to the backend
+        function submitSelections() {
+            const dropdown1 = document.getElementById('dropdown1').value;
+            const dropdown2 = document.getElementById('dropdown2').value;
+            const analysisOption = document.getElementById('analysisDropdown').value;
+            const batchType = document.getElementById('batchTypeDropdown').value;
+            const gamma = document.getElementById('gammaInput').value;
+            const minPatternSize = document.getElementById('minPatternSizeInput').value;
+            const minSample = document.getElementById('minSampleInput').value;
+            const violationTolerance = document.getElementById('violationToleranceInput').value;
+
+            if (dropdown1 && dropdown2 && analysisOption && batchType && gamma) {
+                fetch('/process_selections', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        selection1: dropdown1,
+                        selection2: dropdown2,
+                        analysis: analysisOption,
+                        batchType: batchType,
+                        gamma: parseFloat(gamma), // Convert gamma to a number
+                        minPatternSize: parseInt(minPatternSize),
+                        minSample: parseInt(minSample),
+                        violationTolerance: parseInt(violationTolerance)
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    console.log('Server response:', data.data);
+                    drawChart(data.total_sequence, 'totalSequenceChart', data.analysis_option, false);  // Call D3 visualization function
+                    drawChart(data.data, 'dataChart', data.analysis_option, true);  // Call D3 visualization function
+                    if (data.metrics) {
+                        displayMetricsAsTable(data.metrics);
+                    } else {
+                        console.log('No metrics found in the response!');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Fehler beim Senden der Auswahl:', error);
+                alert('Fehler beim Senden der Auswahl.');
+            });
+        } else {
+            alert('Bitte wählen Sie eine Option in allen Dropdown-Menüs und geben Sie einen Gamma-Wert ein.');
+    }
+}
+function displayMetricsAsTable(metrics) {
+    console.log('Displaying metrics:', metrics);  // Log metrics to verify
+
+    const metricsContainer = document.getElementById('metricsContainer');
+    
+    if (!metricsContainer) {
+        const newContainer = document.createElement('div');
+        newContainer.id = 'metricsContainer';
+        document.body.appendChild(newContainer);  // Or append to a specific section
+    }
+    
+    // Clear any existing content
+    metricsContainer.innerHTML = '';
+    
+    // Create a table element
+    const table = document.createElement('table');
+    table.classList.add('metrics-table');
+    
+    // Create table header
+    const headerRow = document.createElement('tr');
+    const headerKey = document.createElement('th');
+    headerKey.innerText = 'Metric';
+    const headerValue = document.createElement('th');
+    headerValue.innerText = 'Value';
+    headerRow.appendChild(headerKey);
+    headerRow.appendChild(headerValue);
+    table.appendChild(headerRow);
+    
+    // Iterate over the metrics object and create table rows
+    for (const [key, value] of Object.entries(metrics)) {
+        const row = document.createElement('tr');
+        
+        // Create cells for the metric name and value
+        const metricName = document.createElement('td');
+        metricName.innerText = key.replace(/_/g, ' ');  // Format the key (replace underscores with spaces)
+        
+        const metricValue = document.createElement('td');
+        metricValue.innerText = value;
+        
+        // Append the cells to the row
+        row.appendChild(metricName);
+        row.appendChild(metricValue);
+        
+        // Append the row to the table
+        table.appendChild(row);
+    }
+    
+    // Append the table to the container
+    metricsContainer.appendChild(table);
+}
+
+
+    </script>
+
+
+
+    <script>
+    function fetchAndDisplayData() {
+        fetch('/process_selections', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Network response was not OK");
+            }
+            return response.json();  // Parse the response as JSON
+        })
+        .then(data => {
+            console.log("JSON response from server:", data);  // Print the JSON to the console
+
+            // Here you can add your code to process/display the data
+            displayPerformanceSpectrum(data);
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+        });
+    }
+
+    
+
+    // Trigger the data fetch and visualization on page load or button click
+    fetchAndDisplayData();
+    </script>
+</body>
+</html>
