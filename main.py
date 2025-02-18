@@ -113,12 +113,12 @@ def process_selections():
     try:
         # Determine the processing function based on user selections
         if analysis_option == 'Duration':
-            data_processed, data_unprocessed = duration(selection1, selection2, event_log_data , min_Pattern_Size, gamma)
+            data_processed, data_unprocessed = sequence_DBSCAN(selection1, selection2, event_log_data , gamma, min_Pattern_Size)
         elif batch_type == 'lifo':
             data_processed, data_unprocessed = Batch_on_end_lifo_old(selection1, selection2, event_log_data, min_Pattern_Size)
         elif analysis_option == 'Batch on end v1':
             if batch_type == 'fifo':
-                data_processed, data_unprocessed = Batch_on_end_fifo(selection1, selection2, event_log_data, gamma, min_Pattern_Size, violation_Tolerance)
+                data_processed, data_unprocessed = Batch_on_end_fifo2(selection1, selection2, event_log_data, gamma, min_Pattern_Size, violation_Tolerance)
             elif batch_type == 'unordered':
                 data_processed, data_unprocessed = Batch_on_end_unordered(selection1, selection2, event_log_data, gamma, min_Pattern_Size)        
         elif analysis_option == 'Batch on end v2':
@@ -136,6 +136,17 @@ def process_selections():
                 data_processed, data_unprocessed = Batch_on_start_fifo(selection1, selection2, event_log_data, gamma, min_Pattern_Size)
             elif batch_type == 'unordered':
                 data_processed, data_unprocessed = Batch_on_start_unordered(selection1, selection2, event_log_data, gamma, min_Pattern_Size)
+        elif analysis_option == 'Batch on start v2':
+            if batch_type == 'fifo':
+                data_processed, data_unprocessed = new_Batch_on_start_fifo(selection1, selection2, event_log_data, min_Pattern_Size, gamma)
+            elif batch_type == 'unordered':
+                data_processed, data_unprocessed = new_Batch_on_start_unordered(selection1, selection2, event_log_data, min_Pattern_Size, gamma)
+        elif analysis_option == 'Batch on start DBSCAN':
+            if batch_type == 'fifo':
+                data_processed, data_unprocessed = Batch_on_start_fifo_DBSCAN(selection1, selection2, event_log_data, gamma, min_Pattern_Size, min_Sample)
+            elif batch_type == 'unordered':
+                data_processed, data_unprocessed = Batch_on_start_unordered_DBSCAN(selection1, selection2, event_log_data, gamma, min_Pattern_Size, min_Sample)
+        
         
         concat_df = pd.concat(data_processed, ignore_index=True)
         #total_sequence = prepare_data(event_log_data, selection1, selection2, "end")
