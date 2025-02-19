@@ -2,6 +2,12 @@
 Repository to recreate findings
 # Mining-Patterns-in-Performance-Spectrum
 
+
+Docker installation:
+1. enter in cmd: docker build -t performance_spectrum_tool .
+2. enter: docker run -p 5000:5000 performance_spectrum_tool
+3. access http://127.0.0.1:5000
+
 Preperation steps:
 1. install pipenv with pip install pipenv
 2. Navigate to your project directory and create a virtual environment with pipenv install
