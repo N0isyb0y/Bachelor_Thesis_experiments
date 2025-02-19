@@ -98,9 +98,18 @@ def process_selections():
     min_Pattern_Size = data.get('minPatternSize')
     min_Sample = data.get('minSample')
     violation_Tolerance = data.get('violationTolerance')
+    time_unit = data.get('timeUnit')  # Get time unit from frontend
 
     #data = prepare_data(event_log_data, selection1, selection2)
     #print(data)
+    time_conversion = {
+        "seconds": 1 / 86400,  # 1 second = 1/86400 days
+        "minutes": 1 / 1440,   # 1 minute = 1/1440 days
+        "hours": 1 / 24,       # 1 hour = 1/24 days
+        "days": 1              # 1 day = 1 day
+    }
+
+    gamma_days = gamma * time_conversion.get(time_unit, 1)  # Default to days if unknown unit
 
 
     print(f"Dropdown1 selection: {selection1}")
@@ -113,39 +122,39 @@ def process_selections():
     try:
         # Determine the processing function based on user selections
         if analysis_option == 'Duration':
-            data_processed, data_unprocessed = sequence_DBSCAN(selection1, selection2, event_log_data , gamma, min_Pattern_Size)
+            data_processed, data_unprocessed = sequence_DBSCAN(selection1, selection2, event_log_data , gamma_days, min_Pattern_Size)
         elif batch_type == 'lifo':
             data_processed, data_unprocessed = Batch_on_end_lifo_old(selection1, selection2, event_log_data, min_Pattern_Size)
         elif analysis_option == 'Batch on end v1':
             if batch_type == 'fifo':
-                data_processed, data_unprocessed = Batch_on_end_fifo2(selection1, selection2, event_log_data, gamma, min_Pattern_Size, violation_Tolerance)
+                data_processed, data_unprocessed = Batch_on_end_fifo2(selection1, selection2, event_log_data, gamma_days, min_Pattern_Size, violation_Tolerance)
             elif batch_type == 'unordered':
-                data_processed, data_unprocessed = Batch_on_end_unordered(selection1, selection2, event_log_data, gamma, min_Pattern_Size)        
+                data_processed, data_unprocessed = Batch_on_end_unordered(selection1, selection2, event_log_data, gamma_days, min_Pattern_Size)        
         elif analysis_option == 'Batch on end v2':
             if batch_type == 'fifo':
-                data_processed, data_unprocessed = new_Batch_on_end_fifo_3(selection1, selection2, event_log_data, gamma, min_Pattern_Size)
+                data_processed, data_unprocessed = new_Batch_on_end_fifo_3(selection1, selection2, event_log_data, gamma_days, min_Pattern_Size)
             elif batch_type == 'unordered':
-                data_processed, data_unprocessed = new_Batch_on_end_unordered(selection1, selection2, event_log_data, gamma, min_Pattern_Size)
+                data_processed, data_unprocessed = new_Batch_on_end_unordered(selection1, selection2, event_log_data, gamma_days, min_Pattern_Size)
         elif analysis_option == 'Batch on end DBSCAN':
             if batch_type == 'fifo':
-                data_processed, data_unprocessed = Batch_on_end_fifo_DBSCAN2(selection1, selection2, event_log_data, gamma, min_Pattern_Size, min_Sample)
+                data_processed, data_unprocessed = Batch_on_end_fifo_DBSCAN2(selection1, selection2, event_log_data, gamma_days, min_Pattern_Size, min_Sample)
             elif batch_type == 'unordered':
-                data_processed, data_unprocessed = Batch_on_end_unordered_DBSCAN(selection1, selection2, event_log_data, gamma, min_Pattern_Size, min_Sample)
+                data_processed, data_unprocessed = Batch_on_end_unordered_DBSCAN(selection1, selection2, event_log_data, gamma_days, min_Pattern_Size, min_Sample)
         elif analysis_option == 'Batch on start v1':
             if batch_type == 'fifo':
-                data_processed, data_unprocessed = Batch_on_start_fifo(selection1, selection2, event_log_data, gamma, min_Pattern_Size)
+                data_processed, data_unprocessed = Batch_on_start_fifo(selection1, selection2, event_log_data, gamma_days, min_Pattern_Size)
             elif batch_type == 'unordered':
-                data_processed, data_unprocessed = Batch_on_start_unordered(selection1, selection2, event_log_data, gamma, min_Pattern_Size)
+                data_processed, data_unprocessed = Batch_on_start_unordered(selection1, selection2, event_log_data, gamma_days, min_Pattern_Size)
         elif analysis_option == 'Batch on start v2':
             if batch_type == 'fifo':
-                data_processed, data_unprocessed = new_Batch_on_start_fifo(selection1, selection2, event_log_data, min_Pattern_Size, gamma)
+                data_processed, data_unprocessed = new_Batch_on_start_fifo(selection1, selection2, event_log_data, min_Pattern_Size, gamma_days)
             elif batch_type == 'unordered':
-                data_processed, data_unprocessed = new_Batch_on_start_unordered(selection1, selection2, event_log_data, min_Pattern_Size, gamma)
+                data_processed, data_unprocessed = new_Batch_on_start_unordered(selection1, selection2, event_log_data, min_Pattern_Size, gamma_days)
         elif analysis_option == 'Batch on start DBSCAN':
             if batch_type == 'fifo':
-                data_processed, data_unprocessed = Batch_on_start_fifo_DBSCAN(selection1, selection2, event_log_data, gamma, min_Pattern_Size, min_Sample)
+                data_processed, data_unprocessed = Batch_on_start_fifo_DBSCAN(selection1, selection2, event_log_data, gamma_days, min_Pattern_Size, min_Sample)
             elif batch_type == 'unordered':
-                data_processed, data_unprocessed = Batch_on_start_unordered_DBSCAN(selection1, selection2, event_log_data, gamma, min_Pattern_Size, min_Sample)
+                data_processed, data_unprocessed = Batch_on_start_unordered_DBSCAN(selection1, selection2, event_log_data, gamma_days, min_Pattern_Size, min_Sample)
         
         
         concat_df = pd.concat(data_processed, ignore_index=True)

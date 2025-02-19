@@ -111,30 +111,83 @@
             fill: none;
             shape-rendering: crispEdges;
         }
+        /* Center the spinner */
+        #loadingSpinnerContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px; /* Space between spinner and text */
+        }
+
+        /* Spinner Icon */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.3);
+            border-top-color: #000;  /* Black for contrast */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        #uploadSpinnerContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px; /* Space between spinner and text */
+        }
+
+        /* Spinner Animation */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+
+        }
+        .download-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .download-btn:hover {
+            background-color: #0056b3;
+        }
+
+
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Event Data Visualization</h1>
+        <h1>Performance Spectrum Pattern Extractor</h1>
 
         <!-- File upload section -->
         <div class="form-group">
             <label for="fileInput">Select an XES File</label>
             <input type="file" id="fileInput">
-            <button onclick="uploadFile()">Upload File</button>
+            <button id="uploadButton" onclick="uploadFile()">Upload File</button>
+        
+            <!-- Spinner Container -->
+            <div id="uploadSpinnerContainer" style="display: none; text-align: center; margin-top: 10px;">
+                <div class="spinner"></div>
+                <span id="uploadText">Uploading...</span>
+            </div>
         </div>
+        
+        
 
         <!-- Dropdowns for event selection -->
-        <h2>Event Selections</h2>
+        <h2>activity Selections</h2>
         <div class="form-group">
-            <label for="dropdown1">Choose First Event</label>
+            <label for="dropdown1">Choose First activity</label>
             <select id="dropdown1">
                 <option value="">Select an option</option>
             </select>
         </div>
 
         <div class="form-group">
-            <label for="dropdown2">Choose Second Event</label>
+            <label for="dropdown2">Choose Second activity</label>
             <select id="dropdown2">
                 <option value="">Select an option</option>
             </select>
@@ -147,19 +200,19 @@
             <select id="analysisDropdown">
                 <option value="">Select an analysis option</option>
                 <option value="Duration">Duration</option>
-                <option value="Batch on end v1">Batch on end v1</option>
-                <option value="Batch on end v2">Batch on end v2</option>
+                <option value="Batch on end v1">Batch on end original</option>
+                <option value="Batch on end v2">Batch on end time window</option>
                 <option value="Batch on end DBSCAN">Batch on end DBSCAN</option>
-                <option value="Batch on start v1">Batch on start v1</option>
-                <option value="Batch on start v2">Batch on start v2</option>
+                <option value="Batch on start v1">Batch on start original</option>
+                <option value="Batch on start v2">Batch on start time window</option>
                 <option value="Batch on start DBSCAN">Batch on start DBSCAN</option>
             </select>
         </div>
 
         <div class="form-group">
-            <label for="batchTypeDropdown">Select Batch Type</label>
+            <label for="batchTypeDropdown">Select Pattern Type</label>
             <select id="batchTypeDropdown">
-                <option value="">Select a batch type</option>
+                <option value="">Select a Pattern type</option>
                 <option value="unordered">Unordered</option>
                 <option value="fifo">FIFO</option>
                 <option value="lifo">LIFO</option>
@@ -167,32 +220,68 @@
         </div>
 
         <div class="form-group">
+            <label for="timeUnitDropdown">Select Time Unit</label>
+            <select id="timeUnitDropdown">
+                <option value="seconds">Seconds</option>
+                <option value="minutes">Minutes</option>
+                <option value="hours">Hours</option>
+                <option value="days" selected>Days</option>
+            </select>
+            <small class="form-text text-muted">
+                Defines the unit in which the Gamma value is interpreted.
+            </small>
+        </div>
+        
+
+        <div class="form-group">
             <label for="gammaInput">Enter Gamma Value</label><br>
             <input type="number" id="gammaInput" placeholder="Enter Gamma value">
+            <small class="form-text text-muted">
+                Gamma sets the maximum allowable time between two consecutive cases within a batch.
+                A smaller value results in stricter grouping.
+            </small>
         </div>
+        
         
         <!-- New input for Min Pattern Size -->
         <div class="form-group">
             <label for="minPatternSizeInput">Enter Min Pattern Size</label><br>
             <input type="number" id="minPatternSizeInput" placeholder="Enter Min Pattern Size">
+            <small class="form-text text-muted">
+                Defines the minimum number of occurrences required for a pattern to be considered valid.
+            </small>
         </div>
         
         <!-- New input for Min Sample -->
         <div class="form-group">
             <label for="minSampleInput">Enter Min Sample</label><br>
             <input type="number" id="minSampleInput" placeholder="Enter Min Sample">
+            <small class="form-text text-muted">
+                Specifies the minimum number of points that must be within the neighborhood of a core point for it to be considered a cluster in DBSCAN.
+            </small>
         </div>
         
         <!-- New input for Violation Tolerance -->
         <div class="form-group">
             <label for="violationToleranceInput">Enter Violation Tolerance</label><br>
             <input type="number" id="violationToleranceInput" placeholder="Enter Violation Tolerance">
+            <small class="form-text text-muted">
+                Sets the maximum number of violations allowed before a pattern is discarded in the original approach.
+            </small>
         </div>
         
 
         <div class="form-group">
-            <button onclick="submitSelections()">Submit Selections</button>
+            <button id="submitButton" onclick="submitSelections()">Submit Selections</button>
+            
+            <!-- Spinner Container -->
+            <div id="loadingSpinnerContainer" style="display: none; text-align: center; margin-top: 10px;">
+                <div class="spinner"></div>
+                <span id="loadingText">Processing...</span>
+            </div>
         </div>
+        
+        
 
         <!-- Chart Containers -->
         <h2>Visualizations</h2>
@@ -200,14 +289,28 @@
         <div id="totalSequenceChart" class="chart-container"></div>
         <div id="dataChart" class="chart-container"></div>
 
-        <h2>Metrics</h2>
-        <div id="metricsContainer"></div>
+
+        <div class="form-group">
+            <button id="downloadButton" style="display: inline-block; margin-top: 40px;" onclick="downloadData()">Download Data</button>
+        </div>
+        
+        
     </div>
 
     <!-- Tooltip for charts -->
     <div class="tooltip"></div>
 
+    
+
+    
+    
+
+
     <script>
+        //<h2>Metrics</h2>
+        //<div id="metricsContainer"></div>
+
+
         // Sample data (replace this with your fetched JSON data)
         
 
@@ -225,8 +328,9 @@
 
         // Draw chart function
         let globalExtent = null;
-        function drawChart(data, containerId, analysis_option, useGlobalExtent = false) {
-            const margin = { top: 0, right: 20, bottom: 20, left: 50 };
+        function drawChart(data, containerId, analysis_option, startActivity, endActivity, useGlobalExtent = false) {
+            console.log(`Start Activity: ${startActivity}, End Activity: ${endActivity}`);
+            const margin = { top: 30, right: 20, bottom: 20, left: 50 };
             const width = 1800 - margin.left - margin.right;
             const height = 140;
 
@@ -246,7 +350,7 @@
 
             const svg = d3.select(`#${containerId}`).append("svg")
                 .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
+                .attr("height", height + margin.top + margin.bottom + 100)
                 .call(d3.zoom()
                     .scaleExtent([0.75, 10])
                     .on("zoom", zoomed)
@@ -270,18 +374,56 @@
                 .attr("transform", `translate(0,${height - 140})`)
                 .call(xAxisEnd);
 
+        
             if (containerId === "dataChart") {
                 endAxisGroup.selectAll("line").remove();
-                endAxisGroup.selectAll("text").remove();
+                endAxisGroup.selectAll(".tick text").remove();
+                startAxisGroup.append("text")
+                .attr("x", 1720)
+                .attr("y", height - 290) // Adjust for visibility
+                .attr("text-anchor", "end")
+                .style("font-size", "14px")
+                .style("fill", "black")
+                .text(`Observations with Pattern`);
             }
 
             if (containerId === "totalSequenceChart") {
-                startAxisGroup.selectAll("line").remove();
-                startAxisGroup.selectAll("text").remove();
+                //startAxisGroup.selectAll("line").remove();
+                //startAxisGroup.selectAll("text").remove();
                 endAxisGroup.selectAll("line").remove();
-                endAxisGroup.selectAll("text").remove();
+                endAxisGroup.selectAll(".tick text").remove();
+                endAxisGroup.selectAll("line").remove();
+                endAxisGroup.selectAll(".tick text").remove();
+                startAxisGroup.append("text")
+                .attr("x", 1720)
+                .attr("y", height - 290) // Adjust for visibility
+                .attr("text-anchor", "end")
+                .style("font-size", "14px")
+                .style("fill", "black")
+                .text(`All Observations`);
             }
+            
 
+            startAxisGroup.append("text")
+                .attr("x", 0)
+                .attr("y", height - 290) // Adjust for visibility
+                .attr("text-anchor", "start")
+                .style("font-size", "14px")
+                .style("fill", "black")
+                .text(`Start Activity: ${startActivity}`);
+
+            endAxisGroup.append("text")
+                .attr("x", 0)
+                .attr("y", height + 10)  // Positioning it within the view
+                .attr("dy", "1em")
+                .attr("text-anchor", "start")
+                .style("font-size", "14px")
+                .style("fill", "black")
+                .text(`End Activity: ${endActivity}`);
+
+                
+            console.log(startAxisGroup);
+            console.log(endAxisGroup);
             // Calculate duration quartiles
             const sortedDurations = data.map(d => d.duration).sort((a, b) => a - b);
             const q1 = d3.quantile(sortedDurations, 0.25);
@@ -297,11 +439,11 @@
             //};
 
             const getColor = (duration, case_ID) => {
-                console.log(`containerId: ${containerId}, duration: ${duration}, case_ID: ${case_ID}`);
+                //console.log(`containerId: ${containerId}, duration: ${duration}, case_ID: ${case_ID}`);
                 if (containerId === "totalSequenceChart") {
                     const entry = data.find(entry => entry.case_ID === case_ID);
                     if (entry && entry.is_in_subset === 1) {
-                        return "#3f73ff"; // Color for cases in the subset red
+                        return "red"; // Color for cases in the subset red
                     } else {
                         return "#3f73ff"; // Default color for other cases
                     }
@@ -371,15 +513,15 @@
 
                     lines.forEach(line => {
                         if (line.datum().case_ID === closestData.case_ID) {
-                            line.style("stroke-width", 0.5);
+                            line.style("stroke-width", 0.7);
                         } else {
-                            line.style("stroke-width", 0.05);
+                            line.style("stroke-width", 0.7);
                         }
                     });
                 })
                 .on("mouseout", function() {
                     tooltip.style("visibility", "hidden");
-                    lines.forEach(line => line.style("stroke-width", 0.05));
+                    lines.forEach(line => line.style("stroke-width", 0.7));
                 });
         }
         
@@ -447,34 +589,47 @@
         // Funktion zum Hochladen der Datei
         function uploadFile() {
             const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];  // Die ausgewählte Datei
+            const file = fileInput.files[0];  
+            const uploadButton = document.getElementById("uploadButton");
+            const uploadSpinnerContainer = document.getElementById("uploadSpinnerContainer");
 
-            if (file) {
-                const formData = new FormData();
-                formData.append('file', file);  // Datei in FormData packen
-
-                // Datei mittels fetch an das Backend senden
-                fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Erfolgreich hochgeladen:', data);
-                    alert('Datei erfolgreich hochgeladen!');
-
-                    // Dropdown mit den Optionen aus der Backend-Antwort füllen
-                    populateDropdowns(data);
-                    
-                })
-                .catch(error => {
-                    console.error('Fehler beim Hochladen:', error);
-                    alert('Fehler beim Hochladen der Datei.');
-                });
-            } else {
-                alert('Bitte eine Datei auswählen.');
+            if (!file) {
+                alert('Please select a file.');
+                return;
             }
+
+            const formData = new FormData();
+            formData.append('file', file);  
+
+            // **Step 1: Show spinner, hide upload button**
+            uploadButton.style.display = "none";  
+            uploadSpinnerContainer.style.display = "flex";  
+
+            // **Step 2: Upload file**
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Upload successful:', data);
+                alert('File uploaded successfully!');
+
+                // Populate dropdowns based on backend response
+                populateDropdowns(data);
+            })
+            .catch(error => {
+                console.error('Error uploading file:', error);
+                alert('Error uploading file.');
+            })
+            .finally(() => {
+                // **Step 3: Hide spinner, show upload button**
+                uploadSpinnerContainer.style.display = "none";  
+                uploadButton.style.display = "inline-block";  
+            });
         }
+
+
 
         // Dropdown mit Backend-Daten füllen
         function populateDropdowns(options) {
@@ -499,60 +654,124 @@
                 dropdown2.appendChild(optionElement2);
             });
         }
-
-
-        // Auswahl an das Backend senden
-        // Submit all selections to the backend
+        let exportedData = null;
         function submitSelections() {
+            const submitButton = document.getElementById("submitButton");
+            const loadingSpinnerContainer = document.getElementById("loadingSpinnerContainer"); 
+
+            submitButton.style.display = "none";  
+            loadingSpinnerContainer.style.display = "flex";  
+
             const dropdown1 = document.getElementById('dropdown1').value;
             const dropdown2 = document.getElementById('dropdown2').value;
             const analysisOption = document.getElementById('analysisDropdown').value;
             const batchType = document.getElementById('batchTypeDropdown').value;
-            const gamma = document.getElementById('gammaInput').value;
-            const minPatternSize = document.getElementById('minPatternSizeInput').value;
-            const minSample = document.getElementById('minSampleInput').value;
-            const violationTolerance = document.getElementById('violationToleranceInput').value;
+            const gamma = parseFloat(document.getElementById('gammaInput').value);
+            const minPatternSize = parseInt(document.getElementById('minPatternSizeInput').value);
+            const minSample = parseInt(document.getElementById('minSampleInput').value);
+            const violationTolerance = parseInt(document.getElementById('violationToleranceInput').value);
+            const timeUnit = document.getElementById('timeUnitDropdown').value; // Get time unit selection
 
-            if (dropdown1 && dropdown2 && analysisOption && batchType && gamma) {
-                fetch('/process_selections', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        selection1: dropdown1,
-                        selection2: dropdown2,
-                        analysis: analysisOption,
-                        batchType: batchType,
-                        gamma: parseFloat(gamma), // Convert gamma to a number
-                        minPatternSize: parseInt(minPatternSize),
-                        minSample: parseInt(minSample),
-                        violationTolerance: parseInt(violationTolerance)
-                    })
+            // **Validation**
+            if (!(dropdown1 && dropdown2 && analysisOption && batchType)) {
+                alert('⚠️ Please select options in all dropdowns.');
+                resetUI();
+                return;
+            }
+            if (isNaN(gamma) || gamma < 0) {
+                alert("⚠️ Gamma must be a number greater than or equal to 0.");
+                resetUI();
+                return;
+            }
+            if (isNaN(minPatternSize) || minPatternSize <= 0 || !Number.isInteger(minPatternSize)) {
+                alert("⚠️ Min Pattern Size must be a positive integer.");
+                resetUI();
+                return;
+            }
+            if (isNaN(minSample) || minSample <= 0 || !Number.isInteger(minSample)) {
+                alert("⚠️ Min Sample must be a positive integer.");
+                resetUI();
+                return;
+            }
+            if (isNaN(violationTolerance) || violationTolerance < 0 || !Number.isInteger(violationTolerance)) {
+                alert("⚠️ Violation Tolerance must be a positive integer.");
+                resetUI();
+                return;
+            }
+
+            // **Send data to backend**
+            fetch('/process_selections', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    selection1: dropdown1,
+                    selection2: dropdown2,
+                    analysis: analysisOption,
+                    batchType: batchType,
+                    gamma: gamma,
+                    minPatternSize: minPatternSize,
+                    minSample: minSample,
+                    violationTolerance: violationTolerance,
+                    timeUnit: timeUnit // Include time unit
                 })
-                .then(response => response.json())
-                .then(data => {
+            })
+            .then(response => response.json())
+            .then(data => {
                 if (data.error) {
-                    alert('Error: ' + data.error);
+                    alert('❌ Error: ' + data.error);
                 } else {
-                    console.log('Server response:', data.data);
-                    drawChart(data.total_sequence, 'totalSequenceChart', data.analysis_option, false);  // Call D3 visualization function
-                    drawChart(data.data, 'dataChart', data.analysis_option, true);  // Call D3 visualization function
-                    if (data.metrics) {
-                        displayMetricsAsTable(data.metrics);
-                    } else {
-                        console.log('No metrics found in the response!');
+                    drawChart(data.total_sequence, 'totalSequenceChart', data.analysis_option, dropdown1, dropdown2, false);
+                    drawChart(data.data, 'dataChart', data.analysis_option, dropdown1, dropdown2, true);
+                    //if (data.metrics) {
+                    //    displayMetricsAsTable(data.metrics);
+                    //} else {
+                    //    console.log('⚠️ No metrics found in the response!');
+                    //}
+                    exportedData = data.data;
+
+                    // Show the download button when data is available
+                    if (exportedData && exportedData.length > 0) {
+                        downloadButton.style.display = "inline-block";
                     }
                 }
             })
             .catch(error => {
-                console.error('Fehler beim Senden der Auswahl:', error);
-                alert('Fehler beim Senden der Auswahl.');
+                console.error('❌ Error sending selection:', error);
+                alert('❌ Error processing selection.');
+            })
+            .finally(() => {
+                resetUI();
             });
-        } else {
-            alert('Bitte wählen Sie eine Option in allen Dropdown-Menüs und geben Sie einen Gamma-Wert ein.');
-    }
-}
+        }
+        function downloadData() {
+            if (!exportedData || exportedData.length === 0) {
+                alert("No data available for download.");
+                return;
+            }
+
+            // Convert JSON to CSV format
+            const csvHeaders = Object.keys(exportedData[0]).join(",") + "\n";
+            const csvRows = exportedData.map(row => Object.values(row).join(",")).join("\n");
+            const csvContent = "data:text/csv;charset=utf-8," + csvHeaders + csvRows;
+
+            // Create a temporary link element and trigger download
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "exported_data.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+
+        // **Helper function to reset the UI**
+        function resetUI() {
+            document.getElementById("loadingSpinnerContainer").style.display = "none";
+            document.getElementById("submitButton").style.display = "inline-block";
+        }
+
+
 function displayMetricsAsTable(metrics) {
     console.log('Displaying metrics:', metrics);  // Log metrics to verify
 
