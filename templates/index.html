@@ -178,7 +178,7 @@
         
 
         <!-- Dropdowns for event selection -->
-        <h2>activity Selections</h2>
+        <h2>Activity Selections</h2>
         <div class="form-group">
             <label for="dropdown1">Choose First activity</label>
             <select id="dropdown1">
@@ -197,7 +197,7 @@
         <h2>Analysis Options</h2>
         <div class="form-group">
             <label for="analysisDropdown">Choose Analysis</label>
-            <select id="analysisDropdown">
+            <select id="analysisDropdown" onchange="updateInputFields()">
                 <option value="">Select an analysis option</option>
                 <option value="Duration">Duration</option>
                 <option value="Batch on end v1">Batch on end original</option>
@@ -211,7 +211,7 @@
 
         <div class="form-group">
             <label for="batchTypeDropdown">Select Pattern Type</label>
-            <select id="batchTypeDropdown">
+            <select id="batchTypeDropdown" onchange="updateInputFields()">
                 <option value="">Select a Pattern type</option>
                 <option value="unordered">Unordered</option>
                 <option value="fifo">FIFO</option>
@@ -233,40 +233,40 @@
         </div>
         
 
-        <div class="form-group">
-            <label for="gammaInput">Enter Gamma Value</label><br>
-            <input type="number" id="gammaInput" placeholder="Enter Gamma value">
-            <small class="form-text text-muted">
-                Gamma sets the maximum allowable time between two consecutive cases within a batch.
-                A smaller value results in stricter grouping.
+        <div class="form-group" id="gammaGroup">
+            <label for="gammaInput" id="gammaLabel">Enter Gamma Value</label>
+            <label for="gammaInput" id="omegaLabel" style="display: none;">Enter Omega Value</label> <!-- Initially hidden -->
+            <input type="number" id="gammaInput" placeholder="Enter value">
+            <small class="form-text text-muted" id="gammaDescription">
+                Defines the maximum allowed time gap between cases in a batch.
             </small>
         </div>
         
         
         <!-- New input for Min Pattern Size -->
-        <div class="form-group">
-            <label for="minPatternSizeInput">Enter Min Pattern Size</label><br>
+        <div class="form-group" id="minPatternSizeGroup">
+            <label for="minPatternSizeInput">Enter Min Pattern Size</label>
             <input type="number" id="minPatternSizeInput" placeholder="Enter Min Pattern Size">
-            <small class="form-text text-muted">
-                Defines the minimum number of occurrences required for a pattern to be considered valid.
+            <small class="form-text text-muted" id="minPatternSizeDescription">
+                Minimum occurrences required for a pattern to be considered valid.
             </small>
         </div>
         
         <!-- New input for Min Sample -->
-        <div class="form-group">
-            <label for="minSampleInput">Enter Min Sample</label><br>
+        <div class="form-group" id="minSampleGroup">
+            <label for="minSampleInput">Enter Min Sample</label>
             <input type="number" id="minSampleInput" placeholder="Enter Min Sample">
-            <small class="form-text text-muted">
-                Specifies the minimum number of points that must be within the neighborhood of a core point for it to be considered a cluster in DBSCAN.
+            <small class="form-text text-muted" id="minSampleDescription">
+                Minimum number of data points required for DBSCAN clustering.
             </small>
         </div>
         
         <!-- New input for Violation Tolerance -->
-        <div class="form-group">
-            <label for="violationToleranceInput">Enter Violation Tolerance</label><br>
+        <div class="form-group" id="violationToleranceGroup">
+            <label for="violationToleranceInput">Enter Violation Tolerance</label>
             <input type="number" id="violationToleranceInput" placeholder="Enter Violation Tolerance">
-            <small class="form-text text-muted">
-                Sets the maximum number of violations allowed before a pattern is discarded in the original approach.
+            <small class="form-text text-muted" id="violationToleranceDescription">
+                Maximum number of violations allowed before discarding a pattern.
             </small>
         </div>
         
@@ -307,6 +307,93 @@
 
 
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Select all input field groups except the dropdowns
+            document.getElementById("gammaGroup").style.display = "none";
+            document.getElementById("minSampleGroup").style.display = "none";
+            document.getElementById("violationToleranceGroup").style.display = "none";
+            document.getElementById("minPatternSizeGroup").style.display = "none";
+            document.getElementById("timeUnitDropdown").parentElement.style.display = "none"; // Hide time unit selection
+        });
+
+        function updateInputFields() {
+            const analysis = document.getElementById("analysisDropdown").value;
+            const batchType = document.getElementById("batchTypeDropdown").value;
+            const timeUnitGroup = document.getElementById("timeUnitDropdown").parentElement; // Selects the time unit dropdown container
+            const gammaInput = document.getElementById("gammaInput");
+
+            // Select input groups
+            const gammaGroup = document.getElementById("gammaGroup");
+            const minPatternSizeGroup = document.getElementById("minPatternSizeGroup");
+            const minSampleGroup = document.getElementById("minSampleGroup");
+            const violationToleranceGroup = document.getElementById("violationToleranceGroup");
+            
+            // Select labels
+            const gammaLabel = document.querySelector("label[for='gammaInput']"); // Selects the label for Gamma
+            const omegaLabel = document.getElementById("omegaLabel"); // New label for Omega
+
+            // Select descriptions
+            const gammaDescription = document.getElementById("gammaDescription");
+            const minPatternSizeDescription = document.getElementById("minPatternSizeDescription");
+
+            // **Step 1: Hide all input fields initially**
+            gammaGroup.style.display = "none";
+            minPatternSizeGroup.style.display = "none";
+            minSampleGroup.style.display = "none";
+            violationToleranceGroup.style.display = "none";
+            timeUnitGroup.style.display = "none"; // Initially hide time unit selection
+
+            // **Step 2: Show relevant fields based on analysis selection**
+            if (analysis === "Duration") {
+                gammaGroup.style.display = "block";
+                minPatternSizeGroup.style.display = "block";
+                minSampleGroup.style.display = "block";
+                gammaDescription.innerText = "Defines the maximum allowed time difference between events.";
+                minPatternSizeDescription.innerText = "Minimum occurrences required for a duration-based pattern.";
+            }
+            else if (analysis.includes("DBSCAN")) {
+                gammaGroup.style.display = "block";
+                minPatternSizeGroup.style.display = "block";
+                minSampleGroup.style.display = "block";
+                gammaDescription.innerText = "Defines the maximum distance between points to form a cluster in DBSCAN.";
+                minPatternSizeDescription.innerText = "Minimum occurrences required for a batch to be valid in DBSCAN.";
+            } 
+            else if (analysis.includes("v1")) {
+                gammaGroup.style.display = "block";
+                minPatternSizeGroup.style.display = "block";
+                violationToleranceGroup.style.display = "block";
+                gammaDescription.innerText = "Defines the maximum distance between points to form a batch.";
+                minPatternSizeDescription.innerText = "Minimum occurrences required for a pattern.";
+            } 
+            else if (analysis.includes("v2")) {
+                gammaGroup.style.display = "block"; 
+                minPatternSizeGroup.style.display = "block";
+                gammaDescription.innerText = "Defines the time window within which batches are considered valid.";
+                minPatternSizeDescription.innerText = "Minimum occurrences required for a valid batch.";
+            }
+
+            // **Step 3: Special case for LIFO**
+            if (batchType === "lifo") {
+                gammaGroup.style.display = "none";
+                minSampleGroup.style.display = "none";
+                violationToleranceGroup.style.display = "none";
+                timeUnitGroup.style.display = "none"; // Hide time unit selection
+                minPatternSizeGroup.style.display = "block";
+                minPatternSizeDescription.innerText = "Minimum occurrences required for a pattern in LIFO processing.";
+            } else {
+                timeUnitGroup.style.display = "block"; // Show time unit selection for other cases
+            }
+
+            // **Step 4: Adjust Gamma → Omega toggle for time window**
+            if (analysis.includes("v2")) {
+                gammaLabel.style.display = "none";  // Hide Gamma label
+                omegaLabel.style.display = "block"; // Show Omega label
+            } else {
+                gammaLabel.style.display = "block";  // Show Gamma label
+                omegaLabel.style.display = "none";   // Hide Omega label
+            }
+        }
+
         //<h2>Metrics</h2>
         //<div id="metricsContainer"></div>
 
