@@ -765,26 +765,41 @@
                 resetUI();
                 return;
             }
-            if (isNaN(gamma) || gamma < 0) {
-                alert("⚠️ Gamma must be a number greater than or equal to 0.");
-                resetUI();
-                return;
+            if (analysisOption.includes("DBSCAN") || analysisOption.includes("original") || analysisOption.includes("time window") || analysisOption.includes("Duration")) {
+                if (isNaN(gamma) || gamma < 0) {
+                    alert("⚠️ Gamma must be a number greater than or equal to 0.");
+                    resetUI();
+                    return;
+                }
             }
-            if (isNaN(minPatternSize) || minPatternSize <= 0 || !Number.isInteger(minPatternSize)) {
-                alert("⚠️ Min Pattern Size must be a positive integer.");
-                resetUI();
-                return;
+
+            // Min Pattern Size validation
+            if (analysisOption.includes("DBSCAN") || analysisOption.includes("original") || analysisOption.includes("time window") || analysisOption.includes("Duration") || batchType === "lifo") {
+                if (isNaN(minPatternSize) || minPatternSize <= 0 || !Number.isInteger(minPatternSize)) {
+                    alert("⚠️ Min Pattern Size must be a positive integer.");
+                    resetUI();
+                    return;
+                }
             }
-            if (isNaN(minSample) || minSample <= 0 || !Number.isInteger(minSample)) {
-                alert("⚠️ Min Sample must be a positive integer.");
-                resetUI();
-                return;
+
+            // Min Sample validation
+            if (analysisOption.includes("DBSCAN") || analysisOption.includes("Duration")) {
+                if (isNaN(minSample) || minSample <= 0 || !Number.isInteger(minSample)) {
+                    alert("⚠️ Min Sample must be a positive integer.");
+                    resetUI();
+                    return;
+                }
             }
-            if (isNaN(violationTolerance) || violationTolerance < 0 || !Number.isInteger(violationTolerance)) {
-                alert("⚠️ Violation Tolerance must be a positive integer.");
-                resetUI();
-                return;
+
+            // Violation Tolerance validation
+            if (analysisOption.includes("original")) {
+                if (isNaN(violationTolerance) || violationTolerance <= 0 || !Number.isInteger(violationTolerance)) {
+                    alert("⚠️ Violation Tolerance must be a positive integer.");
+                    resetUI();
+                    return;
+                }
             }
+
 
             // **Send data to backend**
             fetch('/process_selections', {
